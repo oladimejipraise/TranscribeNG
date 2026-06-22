@@ -1,0 +1,100 @@
+import { Transcript } from "../models/Transcript.js";
+import { uploadAudio } from "../services/s3.js";
+
+export async function uploadTranscript(req, res) {
+  try {
+    const { language = "auto" } = req.body;
+    const file = req.file;
+
+    if (!file) return res.status(400).json({ message: "No audio file provided" });
+
+    // Save audio file locally
+    const audioKey = await uploadAudio({
+      buffer:   file.buffer,
+      mimetype: file.mimetype,
+      userId:   req.userId,
+    });
+
+    // Create transcript record in database with "processing" status
+    const transcript = await Transcript.create({
+      userId:   req.userId,
+      title:    file.originalname.replace(/\.[^.]+$/, ""),
+      language,
+      audioUrl: audioKey,
+      duration: "—",
+    });
+
+    // ✅ Respond to frontend immediately — don't wait for Whisper
+    res.status(201).json(transcript);
+
+    // 🔄 Trigger transcription in background (fire and forget)
+    triggerTranscription(transcript.id, audioKey, language);
+
+  } catch (err) {
+    console.error("Upload error:", err);
+    res.status(500).json({ message: err.message || "Server error" });
+  }
+}
+
+// Runs in background after response is sent
+async function triggerTranscription(transcriptId, audioKey, language) {
+  try {
+    console.log(`🎙 Starting transcription for ${transcriptId}...`);
+    const aiRes = await fetch(
+      `${process.env.AI_SERVICE_URL}/transcribe/upload?transcriptId=${transcriptId}&audioKey=${audioKey}&language=${language}`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+      }
+    );
+
+    if (!aiRes.ok) {
+      console.error(`❌ Transcription failed for ${transcriptId}`);
+    } else {
+      console.log(`✅ Transcription complete for ${transcriptId}`);
+    }
+  } catch (err) {
+    console.error(`❌ Transcription error for ${transcriptId}:`, err.message);
+  }
+}
+
+export async function getTranscripts(req, res) {
+  try {
+    const transcripts = await Transcript.findAllByUser(req.userId);
+    res.json(transcripts);
+  } catch (err) {
+    res.status(500).json({ message: "Server error" });
+  }
+}
+
+export async function getTranscript(req, res) {
+  try {
+    const transcript = await Transcript.findById(req.params.id, req.userId);
+    if (!transcript) return res.status(404).json({ message: "Transcript not found" });
+    res.json(transcript);
+  } catch (err) {
+    res.status(500).json({ message: "Server error" });
+  }
+}
+
+export async function updateTranscriptContent(req, res) {
+  try {
+    const { content, speakers, status } = req.body;
+    const transcript = await Transcript.updateContent(req.params.id, { content, speakers, status });
+    res.json(transcript);
+  } catch (err) {
+    console.error("Update content error:", err);
+    res.status(500).json({ message: "Server error" });
+  }
+}
+
+export async function deleteTranscript(req, res) {
+  try {
+    const transcript = await Transcript.findById(req.params.id, req.userId);
+    if (!transcript) return res.status(404).json({ message: "Transcript not found" });
+    await Transcript.delete(req.params.id, req.userId);
+    res.json({ message: "Deleted" });
+  } catch (err) {
+    res.status(500).json({ message: "Server error" });
+  }
+}
