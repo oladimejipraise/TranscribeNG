@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Link } from "react-router-dom";
 import { useTranscripts } from "../../context/TranscriptContext";
 import Sidebar from "./Sidebar";
@@ -21,6 +22,7 @@ function StatCard({ icon, label, value }) {
 
 export default function Dashboard() {
   const { transcripts, loading, error, addTranscript } = useTranscripts();
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   const totalMinutes = transcripts.reduce((acc, t) => {
     const parts = t.duration?.split(":").map(Number);
@@ -31,25 +33,36 @@ export default function Dashboard() {
 
   return (
     <div className="flex h-screen overflow-hidden bg-dark">
-      <Sidebar />
+      <Sidebar mobileOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
 
       <main className="flex-1 overflow-y-auto">
-        <div className="px-8 py-8 max-w-5xl mx-auto">
+        <div className="px-4 md:px-8 py-6 md:py-8 max-w-5xl mx-auto">
 
           <div className="flex items-center justify-between mb-8">
-            <div>
-              <h1 className="font-syne font-bold text-2xl text-cream">Dashboard</h1>
-              <p className="text-sm text-cream/40 mt-0.5">Welcome back</p>
+            <div className="flex items-center gap-3">
+              {/* Mobile menu button */}
+              <button
+                onClick={() => setSidebarOpen(true)}
+                className="md:hidden flex flex-col gap-1.5 cursor-pointer p-1"
+              >
+                <span className="block w-5 h-0.5 bg-cream/70" />
+                <span className="block w-5 h-0.5 bg-cream/70" />
+                <span className="block w-5 h-0.5 bg-cream/70" />
+              </button>
+              <div>
+                <h1 className="font-syne font-bold text-xl md:text-2xl text-cream">Dashboard</h1>
+                <p className="text-sm text-cream/40 mt-0.5 hidden md:block">Welcome back</p>
+              </div>
             </div>
             <Link to="/dashboard/record">
-              <Button variant="primary" size="md">🎙 New Recording</Button>
+              <Button variant="primary" size="sm">🎙 New Recording</Button>
             </Link>
           </div>
 
-          <div className="grid grid-cols-3 gap-4 mb-8">
-            <StatCard icon="📄" label="Total Transcripts" value={loading ? "—" : transcripts.length} />
-            <StatCard icon="⏱" label="Minutes Transcribed" value={loading ? "—" : `${totalMinutes} min`} />
-            <StatCard icon="🌐" label="Languages Used"     value={loading ? "—" : languages || "—"} />
+          <div className="grid grid-cols-3 gap-3 md:gap-4 mb-8">
+            <StatCard icon="📄" label="Transcripts"        value={loading ? "—" : transcripts.length} />
+            <StatCard icon="⏱" label="Minutes"            value={loading ? "—" : `${totalMinutes}`} />
+            <StatCard icon="🌐" label="Languages"          value={loading ? "—" : languages || "—"} />
           </div>
 
           {error && (

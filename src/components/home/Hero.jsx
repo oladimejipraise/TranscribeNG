@@ -9,7 +9,7 @@ const HEIGHTS = [
 
 function Waveform() {
   return (
-    <div className="bg-surface border border-subtle rounded-2xl px-7 py-6 mb-4">
+    <div className="bg-surface border border-subtle rounded-2xl px-4 md:px-7 py-6 mb-4">
       <div className="flex justify-between items-center mb-4">
         <div className="flex items-center gap-2 text-accent text-xs font-medium">
           <span className="w-1.5 h-1.5 rounded-full bg-accent animate-pulse" />
@@ -18,7 +18,7 @@ function Waveform() {
         <span className="text-xs text-cream/40 tabular-nums">00:03:45</span>
       </div>
 
-      <div className="flex gap-[3px] items-center h-14 mb-4">
+      <div className="flex gap-[3px] items-center h-14 mb-4 overflow-hidden">
         {HEIGHTS.map((h, i) => (
           <div
             key={i}
@@ -48,13 +48,13 @@ function Waveform() {
 
 const LINES = [
   { speaker: "S1", original: "Ẹ káàrọ̀ sir, mo dúpẹ́ pẹ̀ ẹ wá bá mi sọ ọ̀rọ̀ níi.", translation: "Good morning sir, thank you for coming to speak with me today.", time: "00:00:03" },
-  { speaker: "S2", original: "Yes, good morning. Ko si wahala, I'm happy to talk to you.",  translation: "Yes, good morning. No problem, I'm happy to talk to you.",          time: "00:00:07" },
-  { speaker: "S1", original: "Ìbérè, sẹ́ ò lẹ̀ sọ fún mi nípa iṣẹ́ tí o ṣe?",              translation: "To start with, can you tell me about the work you do?",             time: "00:00:12" },
+  { speaker: "S2", original: "Yes, good morning. Ko si wahala, I'm happy to talk to you.", translation: "Yes, good morning. No problem, I'm happy to talk to you.", time: "00:00:07" },
+  { speaker: "S1", original: "Ìbérè, sẹ́ ò lẹ̀ sọ fún mi nípa iṣẹ́ tí o ṣe?", translation: "To start with, can you tell me about the work you do?", time: "00:00:12" },
 ];
 
 function TranscriptDemo() {
   return (
-    <div className="bg-surface border border-subtle rounded-2xl px-6 py-5">
+    <div className="bg-surface border border-subtle rounded-2xl px-4 md:px-6 py-5">
       {LINES.map((line, i) => (
         <div
           key={i}
@@ -83,22 +83,22 @@ function TranscriptDemo() {
 
 export default function Hero() {
   return (
-    <section className="max-w-[1100px] mx-auto px-12 pt-24 pb-20">
+    <section className="max-w-[1100px] mx-auto px-6 md:px-12 pt-16 md:pt-24 pb-16 md:pb-20">
       <div className="inline-flex items-center gap-2 bg-forest/15 border border-forest/40 text-accent text-xs font-medium px-3.5 py-1.5 rounded-full mb-8">
         🇳🇬 Built for Nigeria. Powered by AI.
       </div>
 
-      <h1 className="font-syne font-extrabold text-[68px] leading-none tracking-tight text-cream max-w-[780px] mb-6">
+      <h1 className="font-syne font-extrabold text-[40px] md:text-[68px] leading-none tracking-tight text-cream max-w-[780px] mb-6">
         Real-time transcription<br />
         for <span className="text-accent">Nigerian languages.</span>
       </h1>
 
-      <p className="text-lg text-cream/60 max-w-[480px] leading-relaxed mb-10 font-light">
+      <p className="text-base md:text-lg text-cream/60 max-w-[480px] leading-relaxed mb-10 font-light">
         Upload audio in Yoruba, Hausa or Igbo and get accurate transcripts,
         translations and smart summaries instantly.
       </p>
 
-      <div className="flex gap-3 items-center mb-12">
+      <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center mb-12">
         <Button variant="primary" size="lg">▶ Start Free Trial</Button>
         <Button variant="ghost"   size="lg">↑ Upload Audio</Button>
       </div>
