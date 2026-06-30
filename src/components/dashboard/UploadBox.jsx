@@ -2,7 +2,7 @@ import { useState, useRef } from "react";
 import Button from "../ui/Button";
 
 const LANGUAGES = ["Auto Detect", "Yoruba", "Hausa", "Igbo", "English"];
-const FORMATS   = ["MP3", "WAV", "M4A", "WhatsApp Voice Note"];
+const FORMATS   = ["MP3", "WAV", "M4A"];
 
 export default function UploadBox({ onUpload }) {
   const [dragging, setDragging] = useState(false);

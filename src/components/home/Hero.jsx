@@ -1,3 +1,5 @@
+import { Link } from "react-router-dom";
+import { useAuth } from "../../context/AuthContext";
 import Button from "../ui/Button";
 
 const HEIGHTS = [
@@ -82,8 +84,11 @@ function TranscriptDemo() {
 }
 
 export default function Hero() {
+  const { user } = useAuth();
+  const destination = user ? "/dashboard" : "/signup";
+
   return (
-    <section className="max-w-[1100px] mx-auto px-6 md:px-12 pt-16 md:pt-24 pb-16 md:pb-20">
+    <section className="max-w-[1100px] mx-auto px-6 md:px-12 pt-16 md:pt-24 pb-4 md:pb-8">
       <div className="inline-flex items-center gap-2 bg-forest/15 border border-forest/40 text-accent text-xs font-medium px-3.5 py-1.5 rounded-full mb-8">
         🇳🇬 Built for Nigeria. Powered by AI.
       </div>
@@ -99,8 +104,12 @@ export default function Hero() {
       </p>
 
       <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center mb-12">
-        <Button variant="primary" size="lg">▶ Start Free Trial</Button>
-        <Button variant="ghost"   size="lg">↑ Upload Audio</Button>
+        <Link to={destination}>
+          <Button variant="primary" size="lg">▶ Start Free Trial</Button>
+        </Link>
+        <Link to={destination}>
+          <Button variant="ghost" size="lg">↑ Upload Audio</Button>
+        </Link>
       </div>
 
       <Waveform />

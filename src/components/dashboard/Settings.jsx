@@ -15,7 +15,7 @@ const PLANS = [
     name: "Pro",
     price: "₦4,500",
     popular: true,
-    features: ["Unlimited transcription", "Translate to English", "AI Summaries", "WhatsApp import", "Priority support"],
+    features: ["Unlimited transcription", "Translate to English", "AI Summaries", "Priority support"],
   },
   {
     name: "Team",
@@ -35,9 +35,9 @@ export default function Settings() {
     emailOnExport:   false,
     productUpdates:  true,
   });
-  const [passwordForm, setPasswordForm]   = useState({ current: "", newPass: "", confirm: "" });
-  const [passwordMsg,  setPasswordMsg]    = useState("");
-  const [loading,      setLoading]        = useState(false);
+  const [passwordForm, setPasswordForm] = useState({ current: "", newPass: "", confirm: "" });
+  const [passwordMsg,  setPasswordMsg]  = useState("");
+  const [loading,      setLoading]      = useState(false);
 
   useEffect(() => {
     const tab = searchParams.get("tab");
@@ -53,6 +53,8 @@ export default function Settings() {
 
   async function handlePasswordChange(e) {
     e.preventDefault();
+    setPasswordMsg("");
+
     if (passwordForm.newPass !== passwordForm.confirm) {
       setPasswordMsg("New passwords do not match");
       return;
@@ -61,12 +63,38 @@ export default function Settings() {
       setPasswordMsg("Password must be at least 8 characters");
       return;
     }
+
     setLoading(true);
-    setTimeout(() => {
-      setPasswordMsg("Password updated successfully");
-      setPasswordForm({ current: "", newPass: "", confirm: "" });
+    try {
+      const token = localStorage.getItem("tng_token");
+      const res   = await fetch(
+        `${import.meta.env.VITE_API_URL}/api/auth/change-password`,
+        {
+          method:  "POST",
+          headers: {
+            "Content-Type":  "application/json",
+            "Authorization": `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            currentPassword: passwordForm.current,
+            newPassword:     passwordForm.newPass,
+          }),
+        }
+      );
+
+      const data = await res.json();
+
+      if (res.ok) {
+        setPasswordMsg("✅ Password updated successfully");
+        setPasswordForm({ current: "", newPass: "", confirm: "" });
+      } else {
+        setPasswordMsg(data.message || "Failed to update password");
+      }
+    } catch (err) {
+      setPasswordMsg("Network error — please try again");
+    } finally {
       setLoading(false);
-    }, 1000);
+    }
   }
 
   return (
@@ -132,7 +160,7 @@ export default function Settings() {
                 ))}
                 {passwordMsg && (
                   <p className={`text-xs px-3 py-2 rounded-lg border ${
-                    passwordMsg.includes("success")
+                    passwordMsg.includes("✅")
                       ? "text-accent bg-forest/10 border-forest/20"
                       : "text-red-400 bg-red-500/10 border-red-500/20"
                   }`}>
@@ -186,9 +214,9 @@ export default function Settings() {
               <p className="text-sm text-cream/40 mb-6">Choose what emails you receive from TranscribeNG.</p>
               <div className="flex flex-col gap-5">
                 {[
-                  { key: "emailOnComplete", label: "Transcription complete", desc: "Get notified when your audio finishes transcribing"    },
+                  { key: "emailOnComplete", label: "Transcription complete", desc: "Get notified when your audio finishes transcribing"     },
                   { key: "emailOnExport",   label: "Export ready",           desc: "Get notified when your export file is ready to download" },
-                  { key: "productUpdates",  label: "Product updates",        desc: "Hear about new features and improvements"              },
+                  { key: "productUpdates",  label: "Product updates",        desc: "Hear about new features and improvements"               },
                 ].map((item) => (
                   <div key={item.key} className="flex items-start justify-between gap-4">
                     <div>

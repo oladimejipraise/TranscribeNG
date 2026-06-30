@@ -26,4 +26,13 @@ export const User = {
     );
     return rows[0] || null;
   },
+
+   async updatePassword(id, passwordHash) {
+    const { rows } = await query(
+      `UPDATE users SET password_hash = $1 WHERE id = $2
+       RETURNING id, name, email, created_at`,
+      [passwordHash, id]
+    );
+    return rows[0];
+  },
 };

@@ -4,7 +4,7 @@ const FEATURES = [
   { icon: "👥", title: "Speaker detection",        desc: "Automatically separates and labels up to 6 different speakers in the same recording." },
   { icon: "📄", title: "AI summaries",             desc: "Get key points, action items, and sentiment analysis automatically after any session." },
   { icon: "🔁", title: "Translate to English",     desc: "Toggle between the original language and English translation with one click." },
-  { icon: "💬", title: "WhatsApp import",          desc: "Forward voice notes directly into the platform. No conversion needed." },
+  { icon: "📤", title: "Multi-format support",     desc: "Upload MP3, WAV, or M4A files — including voice notes exported from WhatsApp." },
 ];
 
 export default function Features() {

@@ -1,7 +1,6 @@
 import Navbar from "../layout/Navbar";
 import Footer from "../layout/Footer";
 import Hero from "./Hero";
-import TrustedBy from "./TrustedBy";
 import Features from "./Features";
 import Languages from "./Languages";
 import CodeSwitchDemo from "./CodeSwitchDemo";
@@ -14,10 +13,11 @@ export default function LandingPage() {
       <Navbar />
       <main>
         <Hero />
-        <TrustedBy />
         <Features />
         <Languages />
+        <div className="hidden md:block">
         <CodeSwitchDemo />
+        </div>
         <HowItWorks />
         <Pricing />
       </main>
