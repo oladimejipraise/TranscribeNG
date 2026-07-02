@@ -8,13 +8,13 @@ import Button from "../ui/Button";
 
 function StatCard({ icon, label, value }) {
   return (
-    <div className="bg-surface border border-subtle rounded-xl px-5 py-4 flex items-center gap-4">
-      <div className="w-10 h-10 rounded-lg bg-forest/15 flex items-center justify-center text-xl flex-shrink-0">
+    <div className="bg-surface border border-subtle rounded-xl px-3 py-3 md:px-5 md:py-4 flex flex-col md:flex-row items-center md:items-center gap-1 md:gap-4">
+      <div className="w-8 h-8 md:w-10 md:h-10 rounded-lg bg-forest/15 flex items-center justify-center text-base md:text-xl flex-shrink-0">
         {icon}
       </div>
-      <div>
+      <div className="text-center md:text-left">
         <p className="text-2xs text-cream/40 mb-0.5">{label}</p>
-        <p className="font-syne font-bold text-xl text-cream">{value}</p>
+        <p className="font-syne font-bold text-lg md:text-xl text-cream">{value}</p>
       </div>
     </div>
   );

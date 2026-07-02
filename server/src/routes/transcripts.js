@@ -5,11 +5,11 @@ import { upload } from "../middleware/upload.js";
 
 const router = Router();
 
-router.use(requireAuth);
-
-router.get("/",        getTranscripts);
-router.get("/:id",     getTranscript);
-router.post("/upload", upload.single("audio"), uploadTranscript);
-router.delete("/:id",  deleteTranscript);
 router.patch("/:id/content", updateTranscriptContent);
+
+router.get("/",        requireAuth, getTranscripts);
+router.get("/:id",     requireAuth, getTranscript);
+router.post("/upload", requireAuth, upload.single("audio"), uploadTranscript);
+router.delete("/:id",  requireAuth, deleteTranscript);
+
 export default router;

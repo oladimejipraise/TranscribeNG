@@ -1,5 +1,8 @@
 import { Transcript } from "../models/Transcript.js";
 import { uploadAudio } from "../services/s3.js";
+import fs from "fs";
+import path from "path";
+import { tmpdir } from "os";
 
 export async function uploadTranscript(req, res) {
   try {
@@ -15,7 +18,6 @@ export async function uploadTranscript(req, res) {
       userId:   req.userId,
     });
 
-    // Create transcript record in database with "processing" status
     const transcript = await Transcript.create({
       userId:   req.userId,
       title:    file.originalname.replace(/\.[^.]+$/, ""),
@@ -24,10 +26,8 @@ export async function uploadTranscript(req, res) {
       duration: "—",
     });
 
-    // ✅ Respond to frontend immediately — don't wait for Whisper
     res.status(201).json(transcript);
 
-    // 🔄 Trigger transcription in background (fire and forget)
     triggerTranscription(transcript.id, audioKey, language);
 
   } catch (err) {
@@ -36,22 +36,39 @@ export async function uploadTranscript(req, res) {
   }
 }
 
-// Runs in background after response is sent
 async function triggerTranscription(transcriptId, audioKey, language) {
   try {
     console.log(`🎙 Starting transcription for ${transcriptId}...`);
+
+    // Read the file from /tmp
+    const filepath = path.join(tmpdir(), audioKey);
+    if (!fs.existsSync(filepath)) {
+      console.error(`❌ Audio file not found: ${filepath}`);
+      return;
+    }
+
+    const audioBuffer = fs.readFileSync(filepath);
+    const ext         = audioKey.split(".").pop();
+    const mimeMap     = { mp3: "audio/mpeg", wav: "audio/wav", m4a: "audio/mp4", ogg: "audio/ogg" };
+    const mimetype    = mimeMap[ext] || "audio/mpeg";
+
+    // Send audio as multipart form to Python
+    const formData = new FormData();
+    formData.append("audio", new Blob([audioBuffer], { type: mimetype }), audioKey);
+    formData.append("transcriptId", transcriptId);
+    formData.append("language", language);
+
     const aiRes = await fetch(
       `${process.env.AI_SERVICE_URL}/transcribe/upload?transcriptId=${transcriptId}&audioKey=${audioKey}&language=${language}`,
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-      }
+      { method: "POST", body: formData }
     );
 
     if (!aiRes.ok) {
-      console.error(`❌ Transcription failed for ${transcriptId}`);
+      console.error(`❌ Transcription failed for ${transcriptId}: ${aiRes.status}`);
     } else {
       console.log(`✅ Transcription complete for ${transcriptId}`);
+      // Clean up temp file after transcription
+      fs.unlinkSync(filepath);
     }
   } catch (err) {
     console.error(`❌ Transcription error for ${transcriptId}:`, err.message);

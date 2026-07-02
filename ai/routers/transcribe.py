@@ -180,45 +180,53 @@ async def transcribe_simple(
 
     return {"text": text, "language": result["language"]}
 
-
 @router.post("/upload")
 async def transcribe_upload(
     transcriptId: str,
     audioKey:     str,
     language:     str = "auto",
+    request:      Request = None,
 ):
-    """Called by Node.js after audio file is saved. Transcribes and updates database."""
-    from dotenv import load_dotenv
-    load_dotenv()
+    """Called by Node.js after audio file is saved. Accepts audio bytes in request body."""
+    try:
+        # Try to get audio from multipart form data first
+        content_type = request.headers.get("content-type", "")
+        
+        if "multipart/form-data" in content_type:
+            form = await request.form()
+            audio_file = form.get("audio")
+            if audio_file:
+                audio_bytes = await audio_file.read()
+            else:
+                return JSONResponse({"error": "No audio in form"}, status_code=400)
+        else:
+            # Fallback: read raw bytes from body
+            audio_bytes = await request.body()
 
-    base_dir    = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-    uploads_dir = os.path.join(base_dir, "uploads")
-    audio_path  = os.path.join(uploads_dir, audioKey)
+        if not audio_bytes:
+            return JSONResponse({"error": "No audio data received"}, status_code=400)
 
-    print(f"Looking for audio file at: {audio_path}")
+        print(f"✅ Received audio: {len(audio_bytes)} bytes for transcript {transcriptId}")
 
-    if not os.path.exists(audio_path):
-        print(f"❌ File not found: {audio_path}")
-        return JSONResponse({"error": f"Audio file not found: {audioKey}"}, status_code=404)
+        lang     = normalize_language(language)
+        result   = transcribe_audio(audio_bytes, lang)
+        segments = tag_codeswitches(result["segments"])
+        lines    = build_lines(segments)
 
-    with open(audio_path, "rb") as f:
-        audio_bytes = f.read()
+        api_url = os.getenv("API_SERVER_URL", "http://localhost:5000")
+        print(f"📡 Patching transcript {transcriptId} at {api_url}")
+        async with httpx.AsyncClient(timeout=30) as client:
+            patch_res = await client.patch(
+                f"{api_url}/api/transcripts/{transcriptId}/content",
+                json={"content": lines, "speakers": 2, "status": "done"},
+            )
+            print(f"📡 Patch response: {patch_res.status_code} — {patch_res.text}")
 
-    print(f"✅ Audio file loaded: {len(audio_bytes)} bytes")
+        return {"ok": True, "lines": len(lines)}
 
-    lang     = normalize_language(language)
-    result   = transcribe_audio(audio_bytes, lang)
-    segments = tag_codeswitches(result["segments"])
-    lines    = build_lines(segments)
-
-    api_url = os.getenv("API_SERVER_URL", "http://localhost:5000")
-    async with httpx.AsyncClient() as client:
-        await client.patch(
-            f"{api_url}/api/transcripts/{transcriptId}/content",
-            json={"content": lines, "speakers": 2, "status": "done"},
-        )
-
-    return {"ok": True, "lines": len(lines)}
+    except Exception as e:
+        print(f"Upload transcription error: {e}")
+        return JSONResponse({"error": str(e)}, status_code=500)
 
 
 @router.post("/stream")
