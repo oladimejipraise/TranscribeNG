@@ -31,7 +31,7 @@ export default function ExportModal({ transcript, onClose }) {
     setError("");
     try {
       const token = localStorage.getItem("tng_token");
-      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/export/generate`, {
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/export/generate`, {
         method:  "POST",
         headers: {
           "Content-Type":  "application/json",
