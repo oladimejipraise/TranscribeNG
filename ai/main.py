@@ -1,20 +1,20 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from dotenv import load_dotenv
-from routers import transcribe, summary
-from routers import export
+from routers import transcribe, summary, export
+import os
 
 load_dotenv()
 
 app = FastAPI(
     title="TranscribeNG AI Service",
-    description="Whisper transcription + AI summary for Nigerian languages",
-    version="1.0.0",
+    description="ElevenLabs Scribe transcription for Nigerian languages",
+    version="2.0.0",
 )
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5000", "http://localhost:5173"],
+    allow_origins=["*"],
     allow_methods=["*"],
     allow_headers=["*"],
 )
