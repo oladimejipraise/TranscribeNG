@@ -9,19 +9,25 @@ export function AuthProvider({ children }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const token = localStorage.getItem("tng_token");
-    if (token) {
-      fetch(`${BASE_URL}/auth/me`, {
-        headers: { Authorization: `Bearer ${token}` },
+  const token = localStorage.getItem("tng_token");
+  if (token) {
+    fetch(`${BASE_URL}/auth/me`, {
+      headers: { Authorization: `Bearer ${token}` },
+    })
+      .then((r) => {
+        if (!r.ok) throw new Error("Session expired");
+        return r.json();
       })
-        .then((r) => r.json())
-        .then((u) => setUser(u))
-        .catch(() => localStorage.removeItem("tng_token"))
-        .finally(() => setLoading(false));
-    } else {
-      setLoading(false);
-    }
-  }, []);
+      .then((u) => setUser(u))
+      .catch(() => {
+        localStorage.removeItem("tng_token");
+        setUser(null);
+      })
+      .finally(() => setLoading(false));
+  } else {
+    setLoading(false);
+  }
+}, []);
 
   async function signup({ name, email, password }) {
     const res = await fetch(`${BASE_URL}/auth/signup`, {
