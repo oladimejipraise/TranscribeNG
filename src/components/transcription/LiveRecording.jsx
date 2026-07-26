@@ -25,6 +25,9 @@ export default function LiveRecording() {
   const [totalSeconds,    setTotalSeconds]    = useState(0);
   const [isPaused,        setIsPaused]        = useState(false);
   const [exportOpen,      setExportOpen]      = useState(false);
+  const [title,           setTitle]           = useState(
+    `Live Recording ${new Date().toLocaleDateString()}`
+  );
   const timerRef = useRef(null);
   const mainRef  = useRef(null);
 
@@ -53,28 +56,50 @@ export default function LiveRecording() {
     return `${m}:${s}`;
   }
 
+  // Merge each incoming chunk into the last line so text flows continuously
   const handlePartial = useCallback((text) => {
-  if (text?.trim()) {
-    setLines((prev) => [...prev, {
-      id:          Date.now() + Math.random(),
-      speaker:     "S1",
-      text:        text.trim(),
-      translation: null,
-      time:        "00:00",
-      lang:        "auto",
-      confidence:  0.9,
-    }]);
-  }
-  setPartialText("");
+    if (text?.trim()) {
+      setLines((prev) => {
+        if (prev.length > 0) {
+          const last    = prev[prev.length - 1];
+          const updated = { ...last, text: `${last.text} ${text.trim()}` };
+          return [...prev.slice(0, -1), updated];
+        }
+        return [{
+          id:          Date.now() + Math.random(),
+          speaker:     "S1",
+          text:        text.trim(),
+          translation: null,
+          time:        "00:00",
+          lang:        "auto",
+          confidence:  0.9,
+        }];
+      });
+    }
+    setPartialText("");
   }, []);
 
+  // Final tail flush when recording stops — merge it in too
   const handleFinal = useCallback((lineOrText) => {
     setPartialText("");
-    const line = typeof lineOrText === "string"
-      ? { id: Date.now(), speaker: "S1", text: lineOrText, translation: null, time: "00:00", lang: "auto", confidence: 0.9 }
-      : lineOrText;
-    if (line?.text?.trim()) {
-      setLines((prev) => [...prev, { ...line, id: Date.now() + Math.random() }]);
+    const text = typeof lineOrText === "string" ? lineOrText : lineOrText?.text;
+    if (text?.trim()) {
+      setLines((prev) => {
+        if (prev.length > 0) {
+          const last    = prev[prev.length - 1];
+          const updated = { ...last, text: `${last.text} ${text.trim()}` };
+          return [...prev.slice(0, -1), updated];
+        }
+        return [{
+          id:          Date.now() + Math.random(),
+          speaker:     "S1",
+          text:        text.trim(),
+          translation: null,
+          time:        "00:00",
+          lang:        "auto",
+          confidence:  0.9,
+        }];
+      });
     }
   }, []);
 
@@ -112,6 +137,7 @@ export default function LiveRecording() {
     setTotalSeconds(0);
     setIsPaused(false);
     setExportOpen(false);
+    setTitle(`Live Recording ${new Date().toLocaleDateString()}`);
     setTimeout(() => {
       if (mainRef.current) mainRef.current.scrollTop = scrollPos;
     }, 0);
@@ -159,7 +185,12 @@ export default function LiveRecording() {
               </button>
               <div>
                 <h1 className="font-syne font-bold text-xl md:text-2xl text-cream">Live Recording</h1>
-                <p className="text-sm text-cream/40 mt-0.5 hidden md:block">Transcribe in real time</p>
+                <input
+                  value={title}
+                  onChange={(e) => setTitle(e.target.value)}
+                  placeholder="Name this transcript..."
+                  className="mt-1 bg-transparent border-b border-subtle focus:border-forest text-sm text-cream/60 focus:text-cream outline-none transition-colors w-56"
+                />
               </div>
             </div>
             <div className="flex items-center gap-2 md:gap-3">
@@ -233,8 +264,11 @@ export default function LiveRecording() {
               <div className="flex items-center gap-3">
                 {lines.length > 0 && !isRecording && (
                   <>
+                    <Button variant="ghost" size="sm" onClick={generateSummary}>
+                      ✨ AI Summary
+                    </Button>
                     <Button variant="ghost" size="sm" onClick={() => setExportOpen(true)}>
-                       Export
+                      📤 Export
                     </Button>
                   </>
                 )}
@@ -270,7 +304,7 @@ export default function LiveRecording() {
       {exportOpen && (
         <ExportModal
           transcript={{
-            title:   `Live Recording — ${new Date().toLocaleDateString()}`,
+            title,
             content: lines,
             language,
           }}
