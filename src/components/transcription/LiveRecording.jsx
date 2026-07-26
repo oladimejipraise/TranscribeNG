@@ -54,7 +54,18 @@ export default function LiveRecording() {
   }
 
   const handlePartial = useCallback((text) => {
-    setPartialText(text);
+  if (text?.trim()) {
+    setLines((prev) => [...prev, {
+      id:          Date.now() + Math.random(),
+      speaker:     "S1",
+      text:        text.trim(),
+      translation: null,
+      time:        "00:00",
+      lang:        "auto",
+      confidence:  0.9,
+    }]);
+  }
+  setPartialText("");
   }, []);
 
   const handleFinal = useCallback((lineOrText) => {
