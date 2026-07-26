@@ -1,21 +1,30 @@
 import { createContext, useContext, useState, useEffect } from "react";
+import { useAuth } from "./AuthContext";
 
 const TranscriptContext = createContext(null);
 
 const BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:5000/api";
 
 export function TranscriptProvider({ children }) {
+  const { user } = useAuth();
   const [transcripts, setTranscripts] = useState([]);
   const [active,      setActive]      = useState(null);
   const [loading,     setLoading]     = useState(true);
   const [error,       setError]       = useState("");
 
-  // Fetch transcripts on first load
   useEffect(() => {
-    fetchTranscripts();
-  }, []);
+    setTranscripts([]);
+    setActive(null);
+    setError("");
 
-  // Poll every 5 seconds if any transcripts are still processing
+    if (user) {
+      fetchTranscripts();
+    } else {
+      setLoading(false);
+    }
+  }, [user?.id]);
+
+
   useEffect(() => {
     const hasProcessing = transcripts.some((t) => t.status === "processing");
     if (!hasProcessing) return;
