@@ -1,5 +1,13 @@
 import { Transcript } from "../models/Transcript.js";
 
+function safeFilename(title, format) {
+  const cleaned = (title || "")
+    .replace(/[^A-Za-z0-9 _-]/g, "")
+    .trim()
+    .replace(/\s+/g, "_") || "transcript";
+  return `${cleaned}.${format}`;
+}
+
 export async function exportTranscript(req, res) {
   try {
     const { id } = req.params;
@@ -23,7 +31,7 @@ export async function exportTranscript(req, res) {
       srt:  "text/plain",
     };
 
-    const filename = `${transcript.title.replace(/\s+/g, "_")}.${format}`;
+    const filename = safeFilename(transcript.title, format);
     res.setHeader("Content-Type", mimeTypes[format] || "application/octet-stream");
     res.setHeader("Content-Disposition", `attachment; filename="${filename}"`);
     res.send(Buffer.from(buffer));
@@ -43,17 +51,17 @@ export async function generateExport(req, res) {
 
     if (!aiRes.ok) throw new Error("Export generation failed");
 
-    const buffer      = await aiRes.arrayBuffer();
-    const format      = req.body.format || "docx";
-    const title       = req.body.title  || "transcript";
-    const mimeTypes   = {
+    const buffer    = await aiRes.arrayBuffer();
+    const format    = req.body.format || "docx";
+    const title     = req.body.title  || "transcript";
+    const mimeTypes = {
       docx: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
       pdf:  "application/pdf",
       txt:  "text/plain",
       srt:  "text/plain",
     };
 
-    const filename = `${title.replace(/\s+/g, "_")}.${format}`;
+    const filename = safeFilename(title, format);
     res.setHeader("Content-Type", mimeTypes[format] || "application/octet-stream");
     res.setHeader("Content-Disposition", `attachment; filename="${filename}"`);
     res.send(Buffer.from(buffer));

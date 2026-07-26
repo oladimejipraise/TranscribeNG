@@ -1,3 +1,4 @@
+import re
 from fastapi import APIRouter
 from fastapi.responses import Response
 from pydantic import BaseModel
@@ -5,6 +6,12 @@ from services.export_service import build_docx, build_pdf, build_txt, build_srt
 from services.translation_service import translate_lines
 
 router = APIRouter(prefix="/export", tags=["export"])
+
+def safe_filename(name: str, ext: str) -> str:
+    """Sanitize filename to ASCII — HTTP headers only allow latin-1 characters."""
+    cleaned = re.sub(r"[^A-Za-z0-9 _-]", "", name or "").strip() or "transcript"
+    cleaned = cleaned.replace(" ", "_")
+    return f"{cleaned}.{ext}"
 
 class ExportRequest(BaseModel):
     lines:               list
@@ -29,22 +36,22 @@ async def export_transcript(body: ExportRequest):
     if fmt == "docx":
         content    = build_docx(lines=lines, title=body.title, content_type=body.content_type, font_name=body.font_name, font_size=body.font_size, include_speakers=body.include_speakers, include_timestamps=body.include_timestamps)
         media_type = "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
-        filename   = f"{body.title}.docx"
+        filename   = safe_filename(body.title, "docx")
 
     elif fmt == "pdf":
         content    = build_pdf(lines=lines, title=body.title, content_type=body.content_type, font_name=body.font_name, font_size=body.font_size, include_speakers=body.include_speakers, include_timestamps=body.include_timestamps)
         media_type = "application/pdf"
-        filename   = f"{body.title}.pdf"
+        filename   = safe_filename(body.title, "pdf")
 
     elif fmt == "txt":
         content    = build_txt(lines=lines, content_type=body.content_type, include_speakers=body.include_speakers, include_timestamps=body.include_timestamps)
         media_type = "text/plain"
-        filename   = f"{body.title}.txt"
+        filename   = safe_filename(body.title, "txt")
 
     elif fmt == "srt":
         content    = build_srt(lines=lines)
         media_type = "text/plain"
-        filename   = f"{body.title}.srt"
+        filename   = safe_filename(body.title, "srt")
 
     else:
         return {"error": f"Unsupported format: {fmt}"}
